@@ -21,9 +21,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 
-/**
- * Created by geely
- */
+
 @Service("iCartService")
 public class CartServiceImpl implements ICartService {
 
@@ -170,11 +168,8 @@ public class CartServiceImpl implements ICartService {
         return cartVo;
     }
 
-    private boolean getAllCheckedStatus(Integer userId){
-        if(userId == null){
-            return false;
-        }
-        return cartMapper.selectCartProductCheckedStatusByUserId(userId) == 0;
+    private boolean getAllCheckedStatus(Integer userId) {
+        return userId != null && cartMapper.selectCartProductCheckedStatusByUserId(userId) == 0;
 
     }
 

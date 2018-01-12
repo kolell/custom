@@ -10,7 +10,6 @@ import com.alipay.demo.trade.model.result.AlipayF2FPrecreateResult;
 import com.alipay.demo.trade.service.AlipayTradeService;
 import com.alipay.demo.trade.service.impl.AlipayTradeServiceImpl;
 import com.alipay.demo.trade.utils.ZxingUtils;
-import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.google.common.collect.Lists;
@@ -54,9 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-/**
- * Created by geely
- */
 @Service("iOrderService")
 public class OrderServiceImpl implements IOrderService {
 
