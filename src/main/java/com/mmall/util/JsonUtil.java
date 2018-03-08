@@ -121,11 +121,10 @@ public class JsonUtil {
 
     public static void main(String[] args) {
         TestPojo testPojo = new TestPojo();
-        testPojo.setName("Geely");
+        testPojo.setName("kole");
         testPojo.setId(666);
 
-        //{"name":"Geely","id":666}
-        String json = "{\"name\":\"Geely\",\"color\":\"blue\",\"id\":666}";
+        String json = "{\"name\":\"kole\",\"color\":\"blue\",\"id\":666}";
         TestPojo testPojoObject = JsonUtil.string2Obj(json,TestPojo.class);
 //        String testPojoJson = JsonUtil.obj2String(testPojo);
 //        log.info("testPojoJson:{}",testPojoJson);
@@ -134,7 +133,6 @@ public class JsonUtil {
 
 //        User user = new User();
 //        user.setId(2);
-//        user.setEmail("geely@happymmall.com");
 //        user.setCreateTime(new Date());
 //        String userJsonPretty = JsonUtil.obj2StringPretty(user);
 //        log.info("userJson:{}",userJsonPretty);
@@ -142,7 +140,6 @@ public class JsonUtil {
 
 //        User u2 = new User();
 //        u2.setId(2);
-//        u2.setEmail("geelyu2@happymmall.com");
 //
 //
 //
