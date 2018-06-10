@@ -37,8 +37,10 @@ import com.mmall.vo.OrderItemVo;
 import com.mmall.vo.OrderProductVo;
 import com.mmall.vo.OrderVo;
 import com.mmall.vo.ShippingVo;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +56,7 @@ import java.util.Map;
 import java.util.Random;
 
 @Service("iOrderService")
+@Slf4j
 public class OrderServiceImpl implements IOrderService {
 
 
@@ -126,8 +129,6 @@ public class OrderServiceImpl implements IOrderService {
         return ServerResponse.createBySuccess(orderVo);
     }
 
-
-
     private OrderVo assembleOrderVo(Order order,List<OrderItem> orderItemList){
         OrderVo orderVo = new OrderVo();
         orderVo.setOrderNo(order.getOrderNo());
@@ -166,7 +167,6 @@ public class OrderServiceImpl implements IOrderService {
         return orderVo;
     }
 
-
     private OrderItemVo assembleOrderItemVo(OrderItem orderItem){
         OrderItemVo orderItemVo = new OrderItemVo();
         orderItemVo.setOrderNo(orderItem.getOrderNo());
@@ -180,8 +180,6 @@ public class OrderServiceImpl implements IOrderService {
         orderItemVo.setCreateTime(DateTimeUtil.dateToStr(orderItem.getCreateTime()));
         return orderItemVo;
     }
-
-
 
     private ShippingVo assembleShippingVo(Shipping shipping){
         ShippingVo shippingVo = new ShippingVo();
@@ -202,8 +200,6 @@ public class OrderServiceImpl implements IOrderService {
         }
     }
 
-
-
     private void reduceProductStock(List<OrderItem> orderItemList){
         for(OrderItem orderItem : orderItemList){
             Product product = productMapper.selectByPrimaryKey(orderItem.getProductId());
@@ -211,7 +207,6 @@ public class OrderServiceImpl implements IOrderService {
             productMapper.updateByPrimaryKeySelective(product);
         }
     }
-
 
     private Order assembleOrder(Integer userId,Integer shippingId,BigDecimal payment){
         Order order = new Order();
@@ -238,8 +233,6 @@ public class OrderServiceImpl implements IOrderService {
         long currentTime =System.currentTimeMillis();
         return currentTime+new Random().nextInt(100);
     }
-
-
 
     private BigDecimal getOrderTotalPrice(List<OrderItem> orderItemList){
         BigDecimal payment = new BigDecimal("0");
@@ -280,10 +273,6 @@ public class OrderServiceImpl implements IOrderService {
         return ServerResponse.createBySuccess(orderItemList);
     }
 
-
-
-
-
     public ServerResponse<String> cancel(Integer userId,Long orderNo){
         Order order  = orderMapper.selectByUserIdAndOrderNo(userId,orderNo);
         if(order == null){
@@ -302,9 +291,6 @@ public class OrderServiceImpl implements IOrderService {
         }
         return ServerResponse.createByError();
     }
-
-
-
 
     public ServerResponse getOrderCartProduct(Integer userId){
         OrderProductVo orderProductVo = new OrderProductVo();
@@ -330,7 +316,6 @@ public class OrderServiceImpl implements IOrderService {
         return ServerResponse.createBySuccess(orderProductVo);
     }
 
-
     public ServerResponse<OrderVo> getOrderDetail(Integer userId,Long orderNo){
         Order order = orderMapper.selectByUserIdAndOrderNo(userId,orderNo);
         if(order != null){
@@ -341,7 +326,6 @@ public class OrderServiceImpl implements IOrderService {
         return  ServerResponse.createByErrorMessage("没有找到该订单");
     }
 
-
     public ServerResponse<PageInfo> getOrderList(Integer userId,int pageNum,int pageSize){
         PageHelper.startPage(pageNum,pageSize);
         List<Order> orderList = orderMapper.selectByUserId(userId);
@@ -350,7 +334,6 @@ public class OrderServiceImpl implements IOrderService {
         pageResult.setList(orderVoList);
         return ServerResponse.createBySuccess(pageResult);
     }
-
 
     private List<OrderVo> assembleOrderVoList(List<Order> orderList,Integer userId){
         List<OrderVo> orderVoList = Lists.newArrayList();
@@ -367,27 +350,6 @@ public class OrderServiceImpl implements IOrderService {
         }
         return orderVoList;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     public ServerResponse pay(Long orderNo,Integer userId,String path){
         Map<String ,String> resultMap = Maps.newHashMap();
@@ -551,10 +513,6 @@ public class OrderServiceImpl implements IOrderService {
         return ServerResponse.createBySuccess();
     }
 
-
-
-
-
     public ServerResponse queryOrderPayStatus(Integer userId,Long orderNo){
         Order order = orderMapper.selectByUserIdAndOrderNo(userId,orderNo);
         if(order == null){
@@ -631,28 +589,29 @@ public class OrderServiceImpl implements IOrderService {
         return ServerResponse.createByErrorMessage("订单不存在");
     }
 
+    @Override
+    public void closeOrder(int hour) {
+        Date closeDateTime = DateUtils.addHours(new Date(),-hour);
+        List<Order> orderList = orderMapper.selectOrderStatusByCreateTime(Const.OrderStatusEnum.NO_PAY.getCode(),DateTimeUtil.dateToStr(closeDateTime));
 
+        for(Order order : orderList){
+            List<OrderItem> orderItemList = orderItemMapper.getByOrderNo(order.getOrderNo());
+            for(OrderItem orderItem : orderItemList){
 
+                //一定要用主键where条件，防止锁表。同时必须是支持MySQL的InnoDB。
+                Integer stock = productMapper.selectStockByProductId(orderItem.getProductId());
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                //考虑到已生成的订单里的商品，被删除的情况
+                if(stock == null){
+                    continue;
+                }
+                Product product = new Product();
+                product.setId(orderItem.getProductId());
+                product.setStock(stock+orderItem.getQuantity());
+                productMapper.updateByPrimaryKeySelective(product);
+            }
+            orderMapper.closeOrderByOrderId(order.getId());
+            log.info("关闭订单OrderNo：{}",order.getOrderNo());
+        }
+    }
 }
