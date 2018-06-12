@@ -8,9 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
-/**
- *
- */
 public class TokenCache {
 
     private static Logger logger = LoggerFactory.getLogger(TokenCache.class);

@@ -2,9 +2,6 @@ package com.mmall.vo;
 
 import java.math.BigDecimal;
 
-/**
- *
- */
 public class ProductListVo {
 
     private Integer id;
